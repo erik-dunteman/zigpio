@@ -173,7 +173,7 @@ pub const GPIO = struct {
     }
 
     pub fn setPullUpDown(self: Self, pin: Pin, pud: PUD) !void {
-        const result = self.lib.gpio.setPullUpDown(pin, @intFromEnum(pud));
+        const result = self.lib.gpio.setPullUpDown(pin, pud);
         if (result < 0) {
             const err = LibErrorCode.from_c_int(result);
             switch (err) {
@@ -211,17 +211,6 @@ pub const GPIO = struct {
         }
     }
 };
-
-// .gpio = .{
-//                 .initialise = lib.lookup(*const fn () callconv(.C) c_int, "gpioInitialise") orelse return Error.SymbolNotFound,
-//                 .terminate = lib.lookup(*const fn () callconv(.C) void, "gpioTerminate") orelse return Error.SymbolNotFound,
-//                 .setMode = lib.lookup(*const fn (gpio: c_uint, mode: c_uint) callconv(.C) c_int, "gpioSetMode") orelse return Error.SymbolNotFound,
-//                 .getMode = lib.lookup(*const fn (gpio: c_uint) callconv(.C) c_uint, "gpioGetMode") orelse return Error.SymbolNotFound,
-//                 .setPullUpDown = lib.lookup(*const fn (gpio: c_uint, pud: c_uint) callconv(.C) c_int, "gpioSetPullUpDown") orelse return Error.SymbolNotFound,
-//                 .read = lib.lookup(*const fn (gpio: c_uint) callconv(.C) c_int, "gpioRead") orelse return Error.SymbolNotFound,
-//                 .write = lib.lookup(*const fn (gpio: c_uint, value: c_int) callconv(.C) c_int, "gpioWrite") orelse return Error.SymbolNotFound,
-//                 .setWatchdog = lib.lookup(*const fn (gpio: c_uint, timeout: c_uint) callconv(.C) c_int, "gpioSetWatchdog") orelse return Error.SymbolNotFound,
-//             },
 
 const LibErrorCode = enum(c_int) {
     Success = 0,
