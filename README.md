@@ -106,5 +106,31 @@ sudo ./zigblink
 
 ---
 
-# Docs
+# Example
 
+### Blinking an LED
+```zig
+const std = @import("std");
+const GPIO = @import("zigpio").GPIO;
+
+// use LED attached to BCM pin #17
+const LED_PIN: GPIO.Pin = GPIO.Pin.fromBCM(17);
+
+pub fn main() !void {
+    const gpio = try GPIO.init();
+    defer gpio.deinit();
+
+    try gpio.setMode(LED_PIN, GPIO.Mode.Output);
+
+    // Blink!
+    while (true) {
+        std.debug.print("Blink on\n", .{});
+        try gpio.write(LED_PIN, GPIO.Level.High);
+        std.time.sleep(std.time.ns_per_s * 1);
+
+        std.debug.print("Blink off\n", .{});
+        try gpio.write(LED_PIN, GPIO.Level.Low);
+        std.time.sleep(std.time.ns_per_s * 1);
+    }
+}
+```
