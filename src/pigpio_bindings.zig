@@ -4,7 +4,7 @@ const std = @import("std");
 // it is not intended to be used directly
 
 pub const LibPigpio = struct {
-    lib: std.DynLib,
+    lib: *std.DynLib,
     gpio: struct {
         initialise: *const fn () callconv(.C) c_int,
         terminate: *const fn () callconv(.C) void,
@@ -34,7 +34,7 @@ pub const LibPigpio = struct {
         errdefer lib.close();
 
         return Self{
-            .lib = lib,
+            .lib = &lib,
             .gpio = .{
                 .initialise = lib.lookup(*const fn () callconv(.C) c_int, "gpioInitialise") orelse return Error.SymbolNotFound,
                 .terminate = lib.lookup(*const fn () callconv(.C) void, "gpioTerminate") orelse return Error.SymbolNotFound,
@@ -54,7 +54,7 @@ pub const LibPigpio = struct {
         };
     }
 
-    pub fn deinit(self: *Self) void {
+    pub fn deinit(self: Self) void {
         self.lib.close();
     }
 

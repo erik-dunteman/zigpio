@@ -4,7 +4,7 @@ const LibPigpio = @import("pigpio_bindings.zig").LibPigpio;
 // GPIO is a wrapper around the raw pigpio library GPU functions
 // making the interface more idiomatic for zig
 pub const GPIO = struct {
-    lib: *const LibPigpio,
+    lib: LibPigpio,
 
     const Self = @This();
 
@@ -14,34 +14,33 @@ pub const GPIO = struct {
             @compileError("GPIO.init() must be called at runtime to dynamically load the pigpio library");
         }
 
-        const lib = LibPigpio.init() catch |err| {
+        // init the c library itself
+        var lib = LibPigpio.init() catch |err| {
             std.debug.print("Failed to initialize pigpio: {}\n", .{err});
             return err;
         };
+        errdefer lib.deinit();
 
-        return Self{ .lib = &lib };
+        // since we're in the GPIO module, the gpio module must also be initialized
+        const result = lib.gpio.initialise();
+        if (result < 0) {
+            std.debug.print("Failed to initialize pigpio: {}\n", .{LibErrorCode.from_c_int(result)});
+            return error.FailedToInitialize;
+        }
+
+        return Self{ .lib = lib };
     }
 
     pub fn deinit(self: Self) void {
-        // deinit the underlying c library
+        self.lib.gpio.terminate();
         self.lib.deinit();
     }
 
-    pub fn initialize(self: Self) !void {
-        // initialize the underlying c library's gpio module
-        const result = self.lib.gpio.initialise();
-        if (result < 0) {
-            return Error.FailedToInitialize;
-        }
-    }
-
-    pub fn terminate(self: Self) void {
-        // terminate the underlying c library's gpio module
-        self.lib.gpio.terminate();
-    }
-
     pub fn setMode(self: Self, pin: Pin, mode: Mode) !void {
-        const result = self.lib.gpio.setMode(pin, mode);
+        const result = self.lib.gpio.setMode(
+            @intFromEnum(pin),
+            @intFromEnum(mode),
+        );
         if (result < 0) {
             const err = LibErrorCode.from_c_int(result);
             switch (err) {
@@ -53,7 +52,7 @@ pub const GPIO = struct {
     }
 
     pub fn getMode(self: Self, pin: Pin) !Mode {
-        const result = self.lib.gpio.getMode(pin);
+        const result = self.lib.gpio.getMode(@intFromEnum(pin));
         if (result >= 0) {
             return @enumFromInt(result);
         }
@@ -66,7 +65,10 @@ pub const GPIO = struct {
     }
 
     pub fn setPullUpDown(self: Self, pin: Pin, pud: PUD) !void {
-        const result = self.lib.gpio.setPullUpDown(pin, pud);
+        const result = self.lib.gpio.setPullUpDown(
+            @intFromEnum(pin),
+            @intFromEnum(pud),
+        );
         if (result < 0) {
             const err = LibErrorCode.from_c_int(result);
             switch (err) {
@@ -78,7 +80,7 @@ pub const GPIO = struct {
     }
 
     pub fn read(self: Self, pin: Pin) !Level {
-        const result = self.lib.gpio.read(pin);
+        const result = self.lib.gpio.read(@intFromEnum(pin));
         if (result < 0) {
             const err = LibErrorCode.from_c_int(result);
             switch (err) {
@@ -91,11 +93,12 @@ pub const GPIO = struct {
 
     pub fn write(self: Self, pin: Pin, level: Level) !void {
         const result = self.lib.gpio.write(
-            pin,
-            level,
+            @intFromEnum(pin),
+            @intFromEnum(level),
         );
         if (result < 0) {
             const err = LibErrorCode.from_c_int(result);
+            std.debug.print("Error writing pin {}: {}\n", .{ @intFromEnum(pin), err });
             switch (err) {
                 .PI_BAD_GPIO => unreachable, // PIN enum already checked
                 .PI_BAD_LEVEL => unreachable, // Level enum already checked
@@ -235,14 +238,12 @@ const LibErrorCode = enum(c_int) {
     PI_BAD_CLK_MICROS = -19,
     PI_BAD_BUF_MILLIS = -20,
     PI_BAD_DUTYRANGE = -21,
-    PI_BAD_DUTY_RANGE = -21,
     PI_BAD_SIGNUM = -22,
     PI_BAD_PATHNAME = -23,
     PI_NO_HANDLE = -24,
     PI_BAD_HANDLE = -25,
     PI_BAD_IF_FLAGS = -26,
     PI_BAD_CHANNEL = -27,
-    PI_BAD_PRIM_CHANNEL = -27,
     PI_BAD_SOCKET_PORT = -28,
     PI_BAD_FIFO_COMMAND = -29,
     PI_BAD_SECO_CHANNEL = -30,
@@ -277,7 +278,6 @@ const LibErrorCode = enum(c_int) {
     PI_SOCK_READ_FAILED = -59,
     PI_SOCK_WRIT_FAILED = -60,
     PI_TOO_MANY_PARAM = -61,
-    PI_NOT_HALTED = -62,
     PI_SCRIPT_NOT_READY = -62,
     PI_BAD_TAG = -63,
     PI_BAD_MICS_DELAY = -64,
