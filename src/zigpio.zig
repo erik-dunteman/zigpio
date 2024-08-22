@@ -166,8 +166,9 @@ pub const GPIO = struct {
         pub fn fromPhysical(comptime physical_pin_id: u8) Pin {
             const fields = @typeInfo(Pin).Enum.fields;
             for (fields) |field| {
-                if (field.toPhysical() == physical_pin_id) {
-                    return @field(Pin, field.name);
+                const instance: Pin = @field(Pin, field.name);
+                if (instance.toPhysical() == physical_pin_id) {
+                    return instance;
                 }
             }
 
