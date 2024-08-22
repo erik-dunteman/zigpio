@@ -1,119 +1,12 @@
 const std = @import("std");
 const LibPigpio = @import("pigpio_bindings.zig").LibPigpio;
 
-// GPIO is a wrapper around the raw pigpio library
+// GPIO is a wrapper around the raw pigpio library GPU functions
 // making the interface more idiomatic for zig
 pub const GPIO = struct {
     lib: *const LibPigpio,
 
     const Self = @This();
-
-    pub const Mode = enum(u8) {
-        Input = 0,
-        Output = 1,
-        Alt5 = 2,
-        Alt4 = 3,
-        Alt0 = 4,
-        Alt1 = 5,
-        Alt2 = 6,
-        Alt3 = 7,
-    };
-
-    pub const PUD = enum(u8) {
-        Off = 0,
-        Down = 1,
-        Up = 2,
-    };
-
-    pub const Level = enum(u8) {
-        Low = 0,
-        High = 1,
-    };
-
-    pub const Pin = enum(u8) {
-        BCM_1 = 1,
-        BCM_2 = 2,
-        BCM_3 = 3,
-        BCM_4 = 4,
-        BCM_5 = 5,
-        BCM_6 = 6,
-        BCM_7 = 7,
-        BCM_8 = 8,
-        BCM_9 = 9,
-        BCM_10 = 10,
-        BCM_11 = 11,
-        BCM_12 = 12,
-        BCM_13 = 13,
-        BCM_14 = 14,
-        BCM_15 = 15,
-        BCM_16 = 16,
-        BCM_17 = 17,
-        BCM_18 = 18,
-        BCM_19 = 19,
-        BCM_20 = 20,
-        BCM_21 = 21,
-        BCM_22 = 22,
-        BCM_23 = 23,
-        BCM_24 = 24,
-        BCM_25 = 25,
-        BCM_26 = 26,
-        BCM_27 = 27,
-
-        pub fn fromBCM(comptime bcm_pin_id: u8) Pin {
-            return @enumFromInt(bcm_pin_id);
-        }
-
-        pub fn fromPhysical(comptime physical_pin_id: u8) Pin {
-            const fields = @typeInfo(Pin).Enum.fields;
-            for (fields) |field| {
-                if (field.toPhysical() == physical_pin_id) {
-                    return @field(Pin, field.name);
-                }
-            }
-
-            @compileError("Invalid physical pin id");
-        }
-
-        pub fn toPhysical(self: Pin) u8 {
-            return switch (self) {
-                .BCM_2 => 3,
-                .BCM_3 => 5,
-                .BCM_4 => 7,
-                .BCM_5 => 29,
-                .BCM_6 => 31,
-                .BCM_7 => 26,
-                .BCM_8 => 24,
-                .BCM_9 => 21,
-                .BCM_10 => 19,
-                .BCM_11 => 23,
-                .BCM_12 => 32,
-                .BCM_13 => 33,
-                .BCM_14 => 8,
-                .BCM_15 => 10,
-                .BCM_16 => 36,
-                .BCM_17 => 11,
-                .BCM_18 => 12,
-                .BCM_19 => 35,
-                .BCM_20 => 38,
-                .BCM_21 => 40,
-                .BCM_22 => 15,
-                .BCM_23 => 16,
-                .BCM_24 => 18,
-                .BCM_25 => 22,
-                .BCM_26 => 37,
-                .BCM_27 => 13,
-                // BCM_0 and 1 are special cases
-                .BCM_0 => 27,
-                .BCM_1 => 28,
-            };
-        }
-    };
-
-    pub const Error = error{
-        FailedToInitialize,
-        InvalidLevel,
-        UnexpectedResult,
-    };
 
     pub fn init() !Self {
         // assert that the library is loaded at runtime
@@ -210,6 +103,113 @@ pub const GPIO = struct {
             }
         }
     }
+
+    pub const Mode = enum(u8) {
+        Input = 0,
+        Output = 1,
+        Alt0 = 4,
+        Alt1 = 5,
+        Alt2 = 6,
+        Alt3 = 7,
+        Alt4 = 3,
+        Alt5 = 2,
+    };
+
+    pub const PUD = enum(u8) {
+        Off = 0,
+        Down = 1,
+        Up = 2,
+    };
+
+    pub const Level = enum(u8) {
+        Low = 0,
+        High = 1,
+    };
+
+    pub const Pin = enum(u8) {
+        BCM0 = 0,
+        BCM1 = 1,
+        BCM2 = 2,
+        BCM3 = 3,
+        BCM4 = 4,
+        BCM5 = 5,
+        BCM6 = 6,
+        BCM7 = 7,
+        BCM8 = 8,
+        BCM9 = 9,
+        BCM10 = 10,
+        BCM11 = 11,
+        BCM12 = 12,
+        BCM13 = 13,
+        BCM14 = 14,
+        BCM15 = 15,
+        BCM16 = 16,
+        BCM17 = 17,
+        BCM18 = 18,
+        BCM19 = 19,
+        BCM20 = 20,
+        BCM21 = 21,
+        BCM22 = 22,
+        BCM23 = 23,
+        BCM24 = 24,
+        BCM25 = 25,
+        BCM26 = 26,
+        BCM27 = 27,
+
+        pub fn fromBCM(comptime bcm_pin_id: u8) Pin {
+            return @enumFromInt(bcm_pin_id);
+        }
+
+        pub fn fromPhysical(comptime physical_pin_id: u8) Pin {
+            const fields = @typeInfo(Pin).Enum.fields;
+            for (fields) |field| {
+                if (field.toPhysical() == physical_pin_id) {
+                    return @field(Pin, field.name);
+                }
+            }
+
+            @compileError("Invalid physical pin id");
+        }
+
+        pub fn toPhysical(self: Pin) u8 {
+            return switch (self) {
+                .BCM2 => 3,
+                .BCM3 => 5,
+                .BCM4 => 7,
+                .BCM5 => 29,
+                .BCM6 => 31,
+                .BCM7 => 26,
+                .BCM8 => 24,
+                .BCM9 => 21,
+                .BCM10 => 19,
+                .BCM11 => 23,
+                .BCM12 => 32,
+                .BCM13 => 33,
+                .BCM14 => 8,
+                .BCM15 => 10,
+                .BCM16 => 36,
+                .BCM17 => 11,
+                .BCM18 => 12,
+                .BCM19 => 35,
+                .BCM20 => 38,
+                .BCM21 => 40,
+                .BCM22 => 15,
+                .BCM23 => 16,
+                .BCM24 => 18,
+                .BCM25 => 22,
+                .BCM26 => 37,
+                .BCM27 => 13,
+                // BCM0 and 1 are special cases
+                .BCM0 => 27,
+                .BCM1 => 28,
+            };
+        }
+    };
+
+    pub const Error = error{
+        FailedToInitialize,
+        UnexpectedResult,
+    };
 };
 
 const LibErrorCode = enum(c_int) {

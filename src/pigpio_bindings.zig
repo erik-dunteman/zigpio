@@ -1,5 +1,8 @@
 const std = @import("std");
 
+// this is the direct binding to the pigpio library
+// it is not intended to be used directly
+
 pub const LibPigpio = struct {
     lib: std.DynLib,
     gpio: struct {
@@ -10,8 +13,9 @@ pub const LibPigpio = struct {
         setPullUpDown: *const fn (gpio: c_uint, pud: c_uint) callconv(.C) c_int,
         read: *const fn (gpio: c_uint) callconv(.C) c_int,
         write: *const fn (gpio: c_uint, value: c_int) callconv(.C) c_int,
-        setWatchdog: *const fn (gpio: c_uint, timeout: c_uint) callconv(.C) c_int,
     },
+
+    // todo: implement spi
     spi: struct {
         open: *const fn (chan: c_uint, baud: c_uint, flags: c_uint) callconv(.C) c_int,
         close: *const fn (handle: c_int) callconv(.C) c_int,
@@ -39,7 +43,6 @@ pub const LibPigpio = struct {
                 .setPullUpDown = lib.lookup(*const fn (gpio: c_uint, pud: c_uint) callconv(.C) c_int, "gpioSetPullUpDown") orelse return Error.SymbolNotFound,
                 .read = lib.lookup(*const fn (gpio: c_uint) callconv(.C) c_int, "gpioRead") orelse return Error.SymbolNotFound,
                 .write = lib.lookup(*const fn (gpio: c_uint, value: c_int) callconv(.C) c_int, "gpioWrite") orelse return Error.SymbolNotFound,
-                .setWatchdog = lib.lookup(*const fn (gpio: c_uint, timeout: c_uint) callconv(.C) c_int, "gpioSetWatchdog") orelse return Error.SymbolNotFound,
             },
             .spi = .{
                 .open = lib.lookup(*const fn (chan: c_uint, baud: c_uint, flags: c_uint) callconv(.C) c_int, "spiOpen") orelse return Error.SymbolNotFound,
