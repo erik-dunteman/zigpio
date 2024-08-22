@@ -197,7 +197,10 @@ pub const GPIO = struct {
     }
 
     pub fn write(self: Self, pin: Pin, level: Level) !void {
-        const result = self.lib.gpio.write(pin, @intFromEnum(level));
+        const result = self.lib.gpio.write(
+            @intFromEnum(pin),
+            @intFromEnum(level),
+        );
         if (result < 0) {
             const err = LibErrorCode.from_c_int(result);
             switch (err) {
