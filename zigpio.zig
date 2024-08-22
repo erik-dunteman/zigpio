@@ -148,7 +148,7 @@ pub const GPIO = struct {
     }
 
     pub fn setMode(self: Self, pin: Pin, mode: Mode) !void {
-        const result = self.lib.gpio.setMode(pin, @intFromEnum(mode));
+        const result = self.lib.gpio.setMode(pin, mode);
         if (result < 0) {
             const err = LibErrorCode.from_c_int(result);
             switch (err) {
@@ -198,8 +198,8 @@ pub const GPIO = struct {
 
     pub fn write(self: Self, pin: Pin, level: Level) !void {
         const result = self.lib.gpio.write(
-            @intFromEnum(pin),
-            @intFromEnum(level),
+            pin,
+            level,
         );
         if (result < 0) {
             const err = LibErrorCode.from_c_int(result);
